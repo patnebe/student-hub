@@ -26,11 +26,9 @@ def create_app(config_class=DevelopmentConfig):
     # Import blueprints
     from src.app.blueprints.api_v1.controllers import api_v1_bp
     from src.app.blueprints.errors.handlers import errors_bp
-    from src.app.blueprints.auth.controllers import auth_bp
 
     # Register blueprints
     app.register_blueprint(errors_bp)
-    app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(api_v1_bp, url_prefix='/api/v1')
 
     # Define database object?
