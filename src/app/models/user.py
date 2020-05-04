@@ -1,69 +1,43 @@
 from flask import current_app
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature,  SignatureExpired)
 from src.app.models.base import Base
-from flask_login import UserMixin
-from src.app import db, login
+from src.app.models.nanodegree import nanodegree_enrollments
+from src.app.models.question import QuestionComment
+from src.app.models.answer import AnswerComment
+from src.app import db
 
 
 
-class User(UserMixin, Base):
-    __tablename__ = 'auth_user'
+class User(Base):
+    __tablename__ = 'user'
 
-    first_name = db.Column(db.String(128), nullable=False)
-    last_name = db.Column(db.String(128), nullable=False)
+    jwt_subject = db.Column(db.String(200), nullable=False, primary_key=True)
+    # This maps the subject claim of the Auth0 JWT to a unique user in the users table
 
-    # Identification data
-    email = db.Column(db.String(128), nullable=False, unique=True)
-    password_hash = db.Column(db.String(192), nullable=False)
+    nanodegrees = db.relationship('Nanodegree', secondary=nanodegree_enrollments, lazy='subquery', backref=db.backref('users', lazy=True))
 
-    # Authorization data
-    # role = db.Column(db.SmallInteger, nullable=False)
-    # status = db.Column(db.SmallInteger, nullable=False)
+    # questions
+    questions = db.relationship('Question', backref="user", lazy=True)
 
-    # Initialization procedure for new instances
-    # def __init__(self, first_name, last_name, email, password):
-    #     self.first_name = first_name
-    #     self.last_name = last_name
-    #     self.email = email
-    #     self.password_hash = password_hash
+    question_comments = db.relationship('QuestionComment', backref="user", lazy=True)
 
-    
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+    # anwers
+    answers = db.relationship('Answer', backref="user", lazy=True)
 
-    
-    def verify_password(self, password):
-        return check_password_hash(self.password_hash, password)
+    answer_comments = db.relationship('AnswerComment', backref="user", lazy=True)
 
-    
-    def generate_auth_token(self, expiration=600):
-        s = Serializer(current_app.config['SECRET_KEY'], expires_in=expiration)
 
-        return s.dumps({'id': self.id})
+    # question vote M2M
 
-    
-    @staticmethod
-    def verify_auth_token(token):
-        s = Serializer(current_app.config['SECRET_KEY'])
-        
-        try:
-            data = s.loads(token)
-            user = User.query.get(data['id'])
-            return user
-        
-        except SignatureExpired:
-            return None
-        
-        except BadSignature:
-            return None
+    # answer vote M2M
 
+
+    # figure out how to get the following fields from the user
+
+    # email = db.Column(db.String(150), nullable=True)
+
+    # firstname = db.Column(db.String(150), nullable=True)
+
+    # lastname = db.Column(db.String(150), nullable=True)
 
     def __repr__(self):
-        return f'<User {self.first_name} {self.email}>'
-
-
-@login.user_loader
-def load_user(id):
-    return User.query.get(int(id))
+        return f'<User {self.jwt_subject}>'
