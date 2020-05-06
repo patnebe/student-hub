@@ -1,8 +1,8 @@
 import os
 from .app import create_app, db
 from .app.models.user import User
-from .app.models.project import Project
 from .app.models.nanodegree import Nanodegree
+from .app.models.project import Project
 from .app.models.question import Question, QuestionComment#, CurrentVoteQuestion
 from .app.models.answer import Answer, AnswerComment#, CurrentVoteAnswer
 
