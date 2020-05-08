@@ -6,10 +6,19 @@ load_dotenv(os.path.join(basedir, '.env'))
 
 
 class DevelopmentConfig(object):
+    """
+    Flask configuration for development
+    """
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DEV_DATABASE_URL') or 'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
+    dev_database_name = os.environ.get(
+        'DEV_DATABASE_NAME')
+    password = os.environ.get(
+        'DATABASE_PASSWORD')
+    username = os.environ.get(
+        'DATABASE_USERNAME')
+
+    SQLALCHEMY_DATABASE_URI = f'postgresql://{username}:{password}@localhost:5432/{dev_database_name}'
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -35,10 +44,19 @@ class DevelopmentConfig(object):
 
 
 class TestConfig(DevelopmentConfig):
+    """
+    Flask configuration for tests
+    """
     TESTING = True
-    
-    # This uses an in-memory SQLite database without opening a disk file
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
-    
+
+    test_database_name = os.environ.get(
+        'TEST_DATABASE_NAME')
+    password = os.environ.get(
+        'DATABASE_PASSWORD')
+    username = os.environ.get(
+        'DATABASE_USERNAME')
+
+    SQLALCHEMY_DATABASE_URI = f'postgresql://{username}:{password}@localhost:5432/{test_database_name}'
+
 
 # Remember to setup a deployment config class

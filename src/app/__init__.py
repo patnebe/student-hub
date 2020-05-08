@@ -17,6 +17,7 @@ db = SQLAlchemy()
 login = LoginManager()
 login.login_view = 'auth.login'
 
+
 def create_app(config_class=DevelopmentConfig):
     app = Flask(__name__)
 
@@ -31,16 +32,12 @@ def create_app(config_class=DevelopmentConfig):
     app.register_blueprint(errors_bp)
     app.register_blueprint(api_v1_bp, url_prefix='/api/v1')
 
-    # Define database object?
     db.init_app(app)
 
-    # Migrate the database?
     Migrate(app, db)
-    
 
     # Setup login manager
     login.init_app(app)
-    
 
     if not app.debug and not app.testing:
         # enable logging
