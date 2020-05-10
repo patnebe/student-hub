@@ -4,6 +4,7 @@ import os
 import random
 import json
 import requests
+import pytest
 
 
 class NanodegreeTestCase(APITestSetup):
@@ -181,48 +182,53 @@ class NanodegreeTestCase(APITestSetup):
 
         self.assertEqual(response_object.status_code, 403)
 
-    # def test_200_success_get_nanodegrees(self):
-    #     """
-    #     A GET request to /nanodegrees should return a list of all the available nanodegrees
-    #     """
+    def test_200_success_get_nanodegrees(self):
+        """
+        A GET request to /nanodegrees should return a list of all the available nanodegrees
+        """
 
-    #     # Retreive login credentials
-    #     admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
-    #     admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
+        admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+        admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
 
-    #     # Get auth token with sufficient authorization (Admin role) from auth0 endpoint
-    #     token = self.get_auth_token_from_Auth0(
-    #         client_id=admin_client_id, client_secret=admin_client_secret)
+        if self.admin_token is None:
+            token = self.get_auth_token_from_Auth0(
+                client_id=admin_client_id, client_secret=admin_client_secret)
 
-    #     # set token as a class property so subsequent tests won't need to request new tokens
-    #     self.admin_token = token
+            self.admin_token = token
 
-    #     # Utilize the auth0 token to create a nanodegree
-    #     payload = {
-    #         "title": "Full Stack Developer Nanodegree",
-    #         "description": "None for now"
-    #     }
+        payload_one = {
+            "title": "Full Stack Developer Nanodegree",
+            "description": "None for now"
+        }
 
-    #     response_object = self.create_nanodegree_request(
-    #         auth_token=self.admin_token, nanodegree_details=payload)
+        payload_two = {
+            "title": "Data Engineer Nanodegree",
+            "description": "None for now"
+        }
 
-    #     response_object = self.create_nanodegree_request(
-    #         auth_token=self.admin_token, nanodegree_details=payload)
+        response_object = self.create_nanodegree_request(
+            auth_token=self.admin_token, nanodegree_details=payload_one)
 
-    #     endpoint = 'api/v1/nanodegrees'
+        response_object = self.create_nanodegree_request(
+            auth_token=self.admin_token, nanodegree_details=payload_two)
 
-    #     response_object = self.client().get(endpoint)
-    #     response_body = response_object.get_json()
+        endpoint = 'api/v1/nanodegrees'
 
-    #     self.assertEqual(response_object.status_code, 200)
-    #     self.assertEqual(type(response_body.data), list)
+        response_object = self.client().get(endpoint)
+        response_body = response_object.get_json()
 
-    #     list_of_nanodegrees = response_body.data
+        self.assertEqual(response_object.status_code, 200)
+        list_of_nanodegrees = response_body['data']
 
-    #     if len(list_of_nanodegrees) > 0:
-    #         for nanodegree in list_of_nanodegrees:
-    #             # add a line of code to validate the content of each nanodegree object
-    #             pass
+        self.assertEqual(type(list_of_nanodegrees), list)
+
+        for nanodegree in list_of_nanodegrees:
+            self.assertTrue('title' in nanodegree,
+                            'The key "title" is missing in the data object')
+            self.assertTrue('description' in nanodegree,
+                            'The key "description" is missing in the data object')
+            self.assertTrue('id' in nanodegree,
+                            'The key "id" is missing in the data object')
 
     # def test_201_success_create_nanodegree_projects(self):
     #     """
