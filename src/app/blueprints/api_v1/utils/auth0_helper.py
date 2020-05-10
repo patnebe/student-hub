@@ -10,9 +10,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
 
-AUTH0_DOMAIN = os.environ.get('AUTH0_DOMAIN')
-ALGORITHMS = os.environ.get('ALGORITHMS')
-API_AUDIENCE = os.environ.get('API_AUDIENCE')
+AUTH0_DOMAIN = os.environ.get('AUTH0_TENANT_DOMAIN')
+ALGORITHMS = os.environ.get('AUTH0_ALGORITHMS')
+API_AUDIENCE = os.environ.get('AUTH0_API_AUDIENCE')
 
 
 class AuthError(Exception):
@@ -66,13 +66,13 @@ def check_permissions(permission, payload):
         raise AuthError({
             "code": "invalid_claims",
             "description": "Permissions not included in JWT"
-        }, 400)
+        }, 403)
 
     if permission not in payload["permissions"]:
         raise AuthError({
             "code": "unauthorized",
             "description": "Permission not found."
-        }, 401)
+        }, 403)
 
     return True
 

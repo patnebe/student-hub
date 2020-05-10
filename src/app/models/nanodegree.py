@@ -9,11 +9,17 @@ class Nanodegree(Base):
     title = db.Column(db.String(150), nullable=False)
 
     description = db.Column(db.String(2000), nullable=False)
-    
+
     projects = db.relationship('Project', backref="nanodegree", lazy=True)
 
     questions = db.relationship('Question', backref="nanodegree", lazy=True)
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description
+        }
 
     def __repr__(self):
         return f'<Nanodegree: {self.title} >'
@@ -21,6 +27,8 @@ class Nanodegree(Base):
 
 nanodegree_enrollments = db.Table(
     'nanodegree_enrollment',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('nanodegree_id', db.Integer, db.ForeignKey('nanodegree.id'), primary_key=True)
+    db.Column('user_id', db.Integer, db.ForeignKey(
+        'user.id'), primary_key=True),
+    db.Column('nanodegree_id', db.Integer, db.ForeignKey(
+        'nanodegree.id'), primary_key=True)
 )
