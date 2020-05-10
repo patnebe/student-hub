@@ -1,6 +1,7 @@
 import json
 from flask import request, _request_ctx_stack, abort
 from functools import wraps
+import jose
 from jose import jwt
 from urllib.request import urlopen
 import os
@@ -83,7 +84,17 @@ def verify_decode_jwt(token):
     """
     jsonurl = urlopen(f"https://{AUTH0_DOMAIN}/.well-known/jwks.json")
     jwks = json.loads(jsonurl.read())
-    unverified_header = jwt.get_unverified_header(token)
+
+    unverified_header = None
+
+    try:
+        unverified_header = jwt.get_unverified_header(token)
+
+    except jose.JWTError:
+        raise AuthError({
+            'code': 'invalid_header',
+            'description': 'Error decoding token headers.'
+        }, 401)
 
     rsa_key = {}
 

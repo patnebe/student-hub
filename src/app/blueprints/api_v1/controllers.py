@@ -58,3 +58,27 @@ def create_nanodegree(jwt):
 
     finally:
         db.session.close()
+
+
+@api_v1_bp.route('/nanodegrees', methods=['GET'])
+def get_nanodegrees():
+    """Returns a list of all available nanodegrees"""
+    try:
+        list_of_nanodegrees = Nanodegree.query.all()
+
+        list_of_nanodegrees = [nanodegree.serialize()
+                               for nanodegree in list_of_nanodegrees]
+
+        response_object = {
+            "success": True,
+            "data": list_of_nanodegrees
+        }
+
+        return jsonify(response_object)
+
+    except:
+        print(sys.exc_info())
+        abort(500)
+
+    finally:
+        db.session.close()
