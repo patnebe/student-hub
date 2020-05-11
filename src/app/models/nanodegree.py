@@ -16,9 +16,9 @@ class Nanodegree(Base):
 
     def serialize(self):
         return {
-            "id": self.id,
-            "title": self.title,
-            "description": self.description
+            "id": int(self.id),
+            "title": str(self.title),
+            "description": str(self.description)
         }
 
     def __repr__(self):

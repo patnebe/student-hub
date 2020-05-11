@@ -6,3 +6,9 @@ class Nanodegree_Input_Schema(Schema):
 
     title = fields.String(required=True)
     description = fields.String(required=True)
+
+
+class Project_Input_Schema(Schema):
+    """A marshmallow schema which validates the JSON payload accompanying POST requests to create a new project"""
+
+    title = fields.String(required=True)
