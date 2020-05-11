@@ -230,124 +230,185 @@ class NanodegreeTestCase(APITestSetup):
             self.assertTrue('id' in nanodegree,
                             'The key "id" is missing in the data object')
 
-    # def test_201_success_create_nanodegree_projects(self):
-    #     """
-    #     A POST request to /nanodegree/<int:id>/projects should return a 201 success and all the projects for the specified nanodegree
-    #     """
-    #     # create a nanodegree
-    #     nanodegree_details = {
-    #         "title": "Test Nanodegree",
-    #         "description": "None for now"
-    #     }
+    def test_201_success_create_nanodegree_projects(self):
+        """
+        A POST request to /nanodegree/<int:id>/projects should return a 201 success and all the projects for the specified nanodegree
+        """
+        # create a nanodegree
+        nanodegree_details = {
+            "title": "Test Nanodegree",
+            "description": "None for now"
+        }
 
-    #     response_object = self.create_nanodegree_request(
-    #         auth_token=self.admin_token, nanodegree_details=nanodegree_details)
+        admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+        admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
 
-    #     self.assertEqual(response_object.status_code, 201)
+        if self.admin_token is None:
+            token = self.get_auth_token_from_Auth0(
+                client_id=admin_client_id, client_secret=admin_client_secret)
 
-    #     # get the id of the created nanodegree
-    #     response_body = response_object.get_json()
+            self.admin_token = token
 
-    #     nanodegree_id = response_body['data']['nanodegree_id']
+        response_object = self.create_nanodegree_request(
+            auth_token=self.admin_token, nanodegree_details=nanodegree_details)
 
-    #     # create projects for this nanodegree
-    #     list_of_projects = [
-    #         {"title": "Fyyur: Events booking portal"},
-    #         {"title": "Coffee Shop Fullstack"}
-    #     ]
+        self.assertEqual(response_object.status_code, 201)
 
-    #     response_object = self.create_project_request(
-    #         auth_token=self.admin_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
+        # get the id of the created nanodegree
+        response_body = response_object.get_json()
 
-    #     self.assertEqual(response_object.status_code, 201)
+        nanodegree_id = response_body['data']['id']
 
-    # def test_400_error_create_nanodegree_projects(self):
-    #     """"""
+        # create projects for this nanodegree
+        list_of_projects = [
+            {"title": "Fyyur: Events booking portal"},
+            {"title": "Coffee Shop Fullstack"}
+        ]
 
-    #     nanodegree_details = {
-    #         "title": "Test Nanodegree",
-    #         "description": "None for now"
-    #     }
+        response_object = self.create_project_request(
+            auth_token=self.admin_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
 
-    #     response_object = self.create_nanodegree_request(
-    #         auth_token=self.admin_token, nanodegree_details=nanodegree_details)
+        self.assertEqual(response_object.status_code, 201)
 
-    #     self.assertEqual(response_object.status_code, 201)
+        # make a call to the projects endpoint to get a list of projects
+        endpoint = f'api/v1/nanodegrees/{nanodegree_id}/projects'
 
-    #     # get the id of the created nanodegree
-    #     response_body = response_object.get_json()
+        response_object = self.client().get(endpoint)
 
-    #     nanodegree_id = response_body['data']['nanodegree_id']
+        self.assertEqual(response_object.status_code, 200)
 
-    #     # create projects for this nanodegree
-    #     list_of_projects = list_of_projects = [
-    #         {"title": "Fyyur: Events booking portal", "id": "DROP TABLE projects;"},
-    #         {"Title": 1234}
-    #     ]
+        list_of_nanodegree_projects = response_object.get_json()['data']
 
-    #     response_object = self.create_project_request(
-    #         auth_token=self.admin_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
+        self.assertEqual(type(list_of_nanodegree_projects), list)
 
-    #     self.assertEqual(response_object.status_code, 400)
+        for index in range(2):
+            project = list_of_nanodegree_projects[index]
+            actual_title = project['title']
+            expected_title = list_of_projects[index]['title']
 
-    # def test_401_error_create_nanodegree_projects(self):
-    #     """"""
+            self.assertEqual(expected_title, actual_title)
+            self.assertTrue('id' in project)
+            self.assertTrue('nanodegree_id' in project)
+            self.assertEqual(type(project['id']), int)
+            self.assertEqual(type(project['nanodegree_id']), int)
+            self.assertEqual(project['nanodegree_id'], nanodegree_id)
 
-    #     nanodegree_details = {
-    #         "title": "Test Nanodegree",
-    #         "description": "None for now"
-    #     }
+    def test_400_error_create_nanodegree_projects(self):
+        """"""
 
-    #     response_object = self.create_nanodegree_request(
-    #         auth_token=self.invalid_random_token, nanodegree_details=nanodegree_details)
+        nanodegree_details = {
+            "title": "Test Nanodegree",
+            "description": "None for now"
+        }
 
-    #     self.assertEqual(response_object.status_code, 201)
+        admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+        admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
 
-    #     # get the id of the created nanodegree
-    #     response_body = response_object.get_json()
+        if self.admin_token is None:
+            token = self.get_auth_token_from_Auth0(
+                client_id=admin_client_id, client_secret=admin_client_secret)
 
-    #     nanodegree_id = response_body['data']['nanodegree_id']
+            self.admin_token = token
 
-    #     # create projects for this nanodegree
-    #     list_of_projects = list_of_projects = [
-    #         {"title": "Fyyur: Events booking portal"},
-    #         {"title": "Coffee Shop Fullstack"}
-    #     ]
+        response_object = self.create_nanodegree_request(
+            auth_token=self.admin_token, nanodegree_details=nanodegree_details)
 
-    #     response_object = self.create_project_request(
-    #         auth_token=self.invalid_random_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
+        self.assertEqual(response_object.status_code, 201)
 
-    #     self.assertEqual(response_object.status_code, 401)
+        # get the id of the created nanodegree
+        response_body = response_object.get_json()
 
-    # def test_403_error_create_nanodegree_projects(self):
-    #     """
-    #     """
+        nanodegree_id = response_body['data']['id']
 
-    #     nanodegree_details = {
-    #         "title": "Test Nanodegree",
-    #         "description": "None for now"
-    #     }
+        # create projects for this nanodegree
+        list_of_projects = list_of_projects = [
+            {"title": "Fyyur: Events booking portal", "id": "DROP TABLE projects;"},
+            {"Title": 1234}
+        ]
 
-    #     response_object = self.create_nanodegree_request(
-    #         auth_token=self.student_token, nanodegree_details=nanodegree_details)
+        response_object = self.create_project_request(
+            auth_token=self.admin_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
 
-    #     self.assertEqual(response_object.status_code, 201)
+        self.assertEqual(response_object.status_code, 400)
 
-    #     # get the id of the created nanodegree
-    #     response_body = response_object.get_json()
+    def test_401_error_create_nanodegree_projects(self):
+        """"""
 
-    #     nanodegree_id = response_body['data']['nanodegree_id']
+        nanodegree_details = {
+            "title": "Test Nanodegree",
+            "description": "None for now"
+        }
 
-    #     # create projects for this nanodegree
-    #     list_of_projects = [
-    #         {"title": "Fyyur: Events booking portal"},
-    #         {"title": "Coffee Shop Fullstack"}
-    #     ]
+        admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+        admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
 
-    #     response_object = self.create_project_request(
-    #         auth_token=self.student_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
+        token = self.get_auth_token_from_Auth0(
+            client_id=admin_client_id, client_secret=admin_client_secret)
 
-    #     self.assertEqual(response_object.status_code, 403)
+        self.admin_token = token
+
+        response_object = self.create_nanodegree_request(
+            auth_token=self.admin_token, nanodegree_details=nanodegree_details)
+
+        self.assertEqual(response_object.status_code, 201)
+
+        # get the id of the created nanodegree
+        response_body = response_object.get_json()
+
+        nanodegree_id = response_body['data']['id']
+
+        # create projects for this nanodegree
+        list_of_projects = list_of_projects = [
+            {"title": "Fyyur: Events booking portal"},
+            {"title": "Coffee Shop Fullstack"}
+        ]
+
+        response_object = self.create_project_request(
+            auth_token=self.invalid_random_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
+
+        self.assertEqual(response_object.status_code, 401)
+
+    def test_403_error_create_nanodegree_projects(self):
+        """
+        """
+
+        nanodegree_details = {
+            "title": "Test Nanodegree",
+            "description": "None for now"
+        }
+
+        admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+        admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
+
+        self.admin_token = self.get_auth_token_from_Auth0(
+            client_id=admin_client_id, client_secret=admin_client_secret)
+
+        response_object = self.create_nanodegree_request(
+            auth_token=self.admin_token, nanodegree_details=nanodegree_details)
+
+        self.assertEqual(response_object.status_code, 201)
+
+        # get the id of the created nanodegree
+        response_body = response_object.get_json()
+
+        nanodegree_id = response_body['data']['id']
+
+        # create projects for this nanodegree
+        list_of_projects = [
+            {"title": "Fyyur: Events booking portal"},
+            {"title": "Coffee Shop Fullstack"}
+        ]
+
+        student_client_id = os.getenv('TEST_STUDENT_CLIENT_ID')
+        student_client_secret = os.getenv('TEST_STUDENT_CLIENT_SECRET')
+
+        self.student_token = self.get_auth_token_from_Auth0(
+            client_id=student_client_id, client_secret=student_client_secret)
+
+        response_object = self.create_project_request(
+            auth_token=self.student_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
+
+        self.assertEqual(response_object.status_code, 403)
 
     # def test_200_success_get_nanodegree_students(self):
     #     """
