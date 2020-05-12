@@ -9,7 +9,8 @@ from src.app import db
 class User(Base):
     __tablename__ = 'user'
 
-    jwt_subject = db.Column(db.String(200), nullable=False, unique=True)
+    jwt_subject = db.Column(
+        db.String(200), nullable=False, unique=True, index=True)
     # This maps the subject claim of the Auth0 JWT to a unique user in the users table
 
     nanodegrees = db.relationship('Nanodegree', secondary=nanodegree_enrollments,
