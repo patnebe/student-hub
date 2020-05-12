@@ -9,13 +9,13 @@ errors_bp = Blueprint('errors', __name__)
 def bad_request(error):
     return jsonify({
         "error": 400,
-        "message": "Bad request.",
+        "message": "Bad request. Input data is not formatted properly",
         "success": False
     }), 400
 
 
 @errors_bp.app_errorhandler(401)
-def unauthorized(error, message="Unauthorized"):
+def unauthorized(error, message="Please login/provide a valid access token to view this page."):
     return jsonify({
         "success": False,
         "error": 401,
@@ -24,7 +24,7 @@ def unauthorized(error, message="Unauthorized"):
 
 
 @errors_bp.app_errorhandler(403)
-def permission_not_found(error, message="Permision not found"):
+def permission_not_found(error, message="You do not have sufficient authorization to view this page."):
     return jsonify({
         "success": False,
         "error": 403,
@@ -41,6 +41,7 @@ def not_found(error):
     }), 404
 
     # return render_template('404.html'), 404
+
 
 @errors_bp.app_errorhandler(405)
 def not_found(error):
