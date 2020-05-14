@@ -52,6 +52,15 @@ def not_found(error):
     }), 405
 
 
+@errors_bp.app_errorhandler(409)
+def conflict(error):
+    return jsonify({
+        "error": 409,
+        "message": "Request failed because there was a conflict",
+        "success": False
+    }), 409
+
+
 @errors_bp.app_errorhandler(422)
 def unprocessable_entity(error):
     return jsonify({
