@@ -174,3 +174,14 @@ def requires_auth(permission=''):
 
         return wrapper
     return requires_auth_decorator
+
+
+def get_jwt_subject():
+    """Returns a the subject from a valid access tokekn"""
+    token = get_token_auth_header()
+    payload = verify_decode_jwt(token)
+
+    if "sub" not in payload:
+        abort(401)
+
+    return payload["sub"]
