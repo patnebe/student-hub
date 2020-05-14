@@ -14,7 +14,7 @@ class User(Base):
     # This maps the subject claim of the Auth0 JWT to a unique user in the users table
 
     nanodegrees = db.relationship('Nanodegree', secondary=nanodegree_enrollments,
-                                  lazy='subquery', backref=db.backref('users', lazy=True))
+                                  lazy='dynamic', backref=db.backref('students', lazy='dynamic'))
 
     # questions
     questions = db.relationship('Question', backref="user", lazy=True)
