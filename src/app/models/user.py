@@ -41,7 +41,7 @@ class User(Base):
     # lastname = db.Column(db.String(150), nullable=True)
 
     def serialize(self):
-        return f'<User {self.jwt_subject}>'
+        return {"id": self.id}
 
     def __repr__(self):
         return f'<User {self.jwt_subject}>'

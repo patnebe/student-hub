@@ -161,7 +161,7 @@ def get_nanodegree_projects(nanodegree_id):
 
 
 @api_v1_bp.route('/nanodegrees/<int:nanodegree_id>/students', methods=['GET'])
-@requires_auth(permission="get:nanodegree-students")
+# @requires_auth(permission="get:nanodegree-students")
 def get_nanodegree_students(nanodegree_id):
     """
     Returns a paginated list of students enrolled in a given nanodegree
@@ -186,9 +186,12 @@ def get_nanodegree_students(nanodegree_id):
     if students_per_page <= 0:
         abort(400)
 
-    try:
-        total_number_of_students = nanodegree.students.count()
+    total_number_of_students = nanodegree.students.count()
 
+    if total_number_of_students < 1:
+        abort(404)
+
+    try:
         start = ((page - 1) * students_per_page) + 1
 
         # list_of_students is a pagination object
@@ -253,14 +256,12 @@ def enroll_in_nanodegree(nanodegree_id):
 
     try:
         # check if the student is in the db
-        student = User.query.filter_by(jwt_subject=jwt_subject).first
+        student = User.query.filter_by(jwt_subject=jwt_subject).first()
 
         # if not present create the student in the db
         if student is None:
             # create student
             student = User(jwt_subject=jwt_subject)
-            student.save()
-            db.session.refresh(student)
 
         # then proceed as usual and register the student for that nanodegree
         nanodegree.students.append(student)
