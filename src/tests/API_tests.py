@@ -456,46 +456,98 @@ class NanodegreeTestCase(APITestSetup):
 
         self.assertEqual(response_object.status_code, 409)
 
-    # def test_200_success_get_nanodegree_students(self):
-    #     """
-    #     """
+    def test_200_success_get_nanodegree_students(self):
+        """
+        """
 
-    #     # create a nanodegree
-    #     nanodegree_details = {
-    #         "title": "Test Nanodegree",
-    #         "description": "None for now"
-    #     }
+        # create a nanodegree
+        nanodegree_details = {
+            "title": "Test Nanodegree",
+            "description": "None for now"
+        }
 
-    #     admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
-    #     admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
+        admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+        admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
 
-    #     if self.admin_token is None:
-    #         token = self.get_auth_token_from_Auth0(
-    #             client_id=admin_client_id, client_secret=admin_client_secret)
+        if self.admin_token is None:
+            self.admin_token = self.get_auth_token_from_Auth0(
+                client_id=admin_client_id, client_secret=admin_client_secret)
 
-    #         self.admin_token = token
+        response_object = self.create_nanodegree_request(
+            auth_token=self.admin_token, nanodegree_details=nanodegree_details)
 
-    #     response_object = self.create_nanodegree_request(
-    #         auth_token=self.admin_token, nanodegree_details=nanodegree_details)
+        self.assertEqual(response_object.status_code, 201)
 
-    #     self.assertEqual(response_object.status_code, 201)
+        # get the id of the created nanodegree
+        response_body = response_object.get_json()
 
-    #     # get the id of the created nanodegree
-    #     response_body = response_object.get_json()
+        nanodegree_id = response_body['data']['id']
 
-    #     nanodegree_id = response_body['data']['id']
+        # Get student token
+        student_client_id = os.getenv('TEST_STUDENT_CLIENT_ID')
+        student_client_secret = os.getenv('TEST_STUDENT_CLIENT_SECRET')
 
-    #     endpoint = f"/api/v1/nanodegrees/{nanodegree_id}/students"
+        if self.student_token is None:
+            self.student_token = self.get_auth_token_from_Auth0(
+                client_id=student_client_id, client_secret=student_client_secret)
 
-    #     # headers = {
-    #     #     "Authorization": f"Bearer {self.admin_token}"
-    #     # }
+        enrollment_endpoint = f"/api/v1/nanodegrees/{nanodegree_id}/enroll"
 
-    #     # response_object = self.client().get(endpoint, headers=headers)
+        # Enroll student in the nanodegree
+        headers = {
+            "Authorization": f"Bearer {self.student_token}"
+        }
 
-    #     response_body = response_object.get_json()
+        response_object = self.client().get(enrollment_endpoint, headers=headers)
 
-    #     self.assertEqual(response_object.status_code, 200)
+        self.assertEqual(response_object.status_code, 200)
+
+        # Enroll admin in the nanodegree
+        headers = {
+            "Authorization": f"Bearer {self.admin_token}"
+        }
+
+        response_object = self.client().get(enrollment_endpoint, headers=headers)
+
+        self.assertEqual(response_object.status_code, 200)
+
+        # get list of students enrolled in Nanodegree
+        students_list_endpoint = f"/api/v1/nanodegrees/{nanodegree_id}/students"
+
+        headers = {
+            "Authorization": f"Bearer {self.admin_token}"
+        }
+
+        response_object = self.client().get(students_list_endpoint, headers=headers)
+
+        response_body = response_object.get_json()
+
+        data = response_body['data']
+
+        # Ensure that the data is returned in the right shape
+        self.assertEqual(response_object.status_code, 200)
+        self.assertTrue("nanodegree" in data)
+        self.assertTrue("students" in data)
+        self.assertTrue("total_number_of_students" in data)
+        self.assertTrue("has_next_page" in data)
+        self.assertTrue("next_page" in data)
+        self.assertTrue("has_previous_page" in data)
+        self.assertTrue("previous_page" in data)
+
+        # Ensure that the data returned is of the right type and within the expected ranges
+        self.assertTrue(type(data['nanodegree']), str)
+        self.assertTrue(type(data['students']), list)
+
+        for student in data['students']:
+            self.assertEqual(type(student), dict)
+            self.assertTrue("id" in student)
+
+        self.assertTrue(type(data['total_number_of_students']), int)
+        self.assertTrue(type(data['has_next_page']), bool)
+        self.assertTrue(data['next_page'] is None or data['next_page'] >= 2)
+        self.assertTrue(type(data['has_previous_page']), bool)
+        self.assertTrue(data['previous_page']
+                        is None or data['previous_page'] >= 1)
 
 
 # class QuestionsTestCase(APITestSetup):
