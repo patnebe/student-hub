@@ -18,7 +18,10 @@ class DevelopmentConfig(object):
     username = os.environ.get(
         'DATABASE_USERNAME')
 
-    SQLALCHEMY_DATABASE_URI = f'postgresql://{username}:{password}@localhost:5432/{dev_database_name}'
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'DATABASE_URL') or f'postgresql://{username}:{password}@localhost:5432/{dev_database_name}'
+
+    # Modify this and move the heroku postgres database url into the deployment config
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -58,7 +61,8 @@ class TestConfig(DevelopmentConfig):
     username = os.environ.get(
         'DATABASE_USERNAME')
 
-    SQLALCHEMY_DATABASE_URI = f'postgresql://{username}:{password}@localhost:5432/{test_database_name}'
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'HEROKU_POSTGRESQL_BLACK_URL') or f'postgresql://{username}:{password}@localhost:5432/{test_database_name}'
 
 
 # Remember to setup a deployment config class
