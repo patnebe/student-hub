@@ -410,14 +410,70 @@ class NanodegreeTestCase(APITestSetup):
 
         self.assertEqual(response_object.status_code, 403)
 
+    def test_200_success_and_409_conflict_enroll_in_nanodegree(self):
+        # create a nanodegree
+        nanodegree_details = {
+            "title": "Test Nanodegree",
+            "description": "None for now"
+        }
+
+        admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+        admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
+
+        if self.admin_token is None:
+            token = self.get_auth_token_from_Auth0(
+                client_id=admin_client_id, client_secret=admin_client_secret)
+
+            self.admin_token = token
+
+        response_object = self.create_nanodegree_request(
+            auth_token=self.admin_token, nanodegree_details=nanodegree_details)
+
+        self.assertEqual(response_object.status_code, 201)
+
+        # get the id of the created nanodegree
+        response_body = response_object.get_json()
+
+        nanodegree_id = response_body['data']['id']
+
+        student_client_id = os.getenv('TEST_STUDENT_CLIENT_ID')
+        student_client_secret = os.getenv('TEST_STUDENT_CLIENT_SECRET')
+
+        self.student_token = self.get_auth_token_from_Auth0(
+            client_id=student_client_id, client_secret=student_client_secret)
+
+        endpoint = f"/api/v1/nanodegrees/{nanodegree_id}/enroll"
+
+        headers = {
+            "Authorization": f"Bearer {self.student_token}"
+        }
+
+        response_object = self.client().get(endpoint, headers=headers)
+
+        self.assertEqual(response_object.status_code, 200)
+
+        response_object = self.client().get(endpoint, headers=headers)
+
+        self.assertEqual(response_object.status_code, 409)
+
     # def test_200_success_get_nanodegree_students(self):
     #     """
     #     """
 
+    #     # create a nanodegree
     #     nanodegree_details = {
     #         "title": "Test Nanodegree",
     #         "description": "None for now"
     #     }
+
+    #     admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+    #     admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
+
+    #     if self.admin_token is None:
+    #         token = self.get_auth_token_from_Auth0(
+    #             client_id=admin_client_id, client_secret=admin_client_secret)
+
+    #         self.admin_token = token
 
     #     response_object = self.create_nanodegree_request(
     #         auth_token=self.admin_token, nanodegree_details=nanodegree_details)
@@ -427,17 +483,15 @@ class NanodegreeTestCase(APITestSetup):
     #     # get the id of the created nanodegree
     #     response_body = response_object.get_json()
 
-    #     nanodegree_id = response_body['data']['nanodegree_id']
+    #     nanodegree_id = response_body['data']['id']
 
     #     endpoint = f"/api/v1/nanodegrees/{nanodegree_id}/students"
 
-    #     ###############################
-    #     ###############################
-    #     ##### Post some students ######
-    #     ###############################
-    #     ###############################
+    #     # headers = {
+    #     #     "Authorization": f"Bearer {self.admin_token}"
+    #     # }
 
-    #     response_object = self.client().get(endpoint)
+    #     # response_object = self.client().get(endpoint, headers=headers)
 
     #     response_body = response_object.get_json()
 
