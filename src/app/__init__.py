@@ -1,5 +1,4 @@
 from flask import Flask, render_template, jsonify
-from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from src.config import DevelopmentConfig
 from flask_migrate import Migrate
@@ -13,9 +12,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
 db = SQLAlchemy()
-
-login = LoginManager()
-login.login_view = 'auth.login'
 
 
 def create_app(config_class=DevelopmentConfig):
@@ -35,9 +31,6 @@ def create_app(config_class=DevelopmentConfig):
     db.init_app(app)
 
     Migrate(app, db)
-
-    # Setup login manager
-    login.init_app(app)
 
     if not app.debug and not app.testing:
         # enable logging
