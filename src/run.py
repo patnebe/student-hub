@@ -1,5 +1,5 @@
 import os
-from src.config import DevelopmentConfig
+from .config import DevelopmentConfig
 from .app import create_app, db
 from .app.models.user import User
 from .app.models.nanodegree import Nanodegree, nanodegree_enrollments

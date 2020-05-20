@@ -22,7 +22,7 @@ marshmallow==3.5.1
 more-itertools==8.2.0
 packaging==20.3
 pluggy==0.13.1
-psycopg2==2.8.5
+psycopg2-binary
 py==1.8.1
 pyasn1==0.4.8
 pycodestyle==2.5.0
