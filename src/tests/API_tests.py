@@ -550,91 +550,238 @@ class NanodegreeTestCase(APITestSetup):
                         is None or data['previous_page'] >= 1)
 
 
-# class QuestionsTestCase(APITestSetup):
-#     def test_201_success_post_question(self):
-#         """
-#         A request to create a question should return a 201 success status if the required data is provided in the right format.
-#         """
+class QuestionsTestCase(APITestSetup):
+    admin_token = None
+    student_token = None
+    invalid_random_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-#         endpoint = 'api/v1/questions'
+    def get_auth_token_from_Auth0(self, client_id=None, client_secret=None):
+        """
+        This returns an auth0 token for the provided login credentials
+        """
 
-#         payload = {
-#             'title': "Hi, my tests are passing. How do I stop this?",
-#             'details': "Please help!!!!",
-#             'asked_by': 8989898,
-#             'nanodegree_id': 44,
-#             'project_id': 309,
-#             'github_link': None
-#         }
+        AUTH0_TENANT_DOMAIN = os.getenv('AUTH0_TENANT_DOMAIN')
 
-#         response_object = self.client().post(endpoint, json=payload)
+        url = f'https://{AUTH0_TENANT_DOMAIN}/oauth/token'
 
-#         self.assertEqual(response_object.status_code, 201)
+        payload = {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "audience": os.getenv('AUTH0_API_AUDIENCE'),
+            "grant_type": "client_credentials"
+        }
 
-#     def test_400_error_post_question(self):
-#         """
-#         A request to create a new question should return a 400 error if the input data is incomplete and/or provided in the wrong format
-#         """
-#         endpoint = 'api/v1/questions'
+        response_object = requests.post(url=url, json=payload)
 
-#         payloads = [3, 'question', {}, {'title': "Is this a title?",
-#                                         'details': "More details", 'asked_by': 8989898, 'project_id': 309}, (), []]
+        response_data = response_object.json()
 
-#         for payload in payloads:
-#             response_object = self.client().post(endpoint, json=payload)
+        if "access_token" in response_data and "token_type" in response_data:
+            return response_data['access_token']
 
-#             self.assertEqual(response_object.status_code, 400)
+        return None
 
-#     def test_200_success_get_questions(self):
-#         """
-#         A request to get all questions should successfully return the questions in the right format
-#         """
-#         endpoint = 'api/v1/questions'
+    def create_nanodegree_request(self, auth_token=None, nanodegree_details={}):
+        """
+        Helper method for creating nanodegrees
 
-#         response_object = self.client().get(endpoint)
+        Returns the http response object
+        """
 
-#         self.assertEqual(response_object.status_code, 200)
+        endpoint = "api/v1/nanodegrees"
 
-#     def test_success_patch_question(self):
-#         """
-#         A request to update a question should be successful if the required input data is provided in the right format
-#         """
-#         pass
+        headers = {
+            "Authorization": f"Bearer {auth_token}"
+        }
 
-#     def test_201_success_post_question_comment(self):
-#         """
-#         A request to post a comment on a question should be successful if the required input data is provided in the right format
-#         """
-#         pass
+        response_object = self.client().post(
+            endpoint, headers=headers, json=nanodegree_details)
 
-#     def test_200_success_delete_question_comment(self):
-#         """
-#         A request to delete a comment posted on a question should be successful
-#         """
-#         pass
+        return response_object
 
-#     def test_404_success_delete_question_comment(self):
-#         """
-#         A request to delete a non-existent/previously deleted comment on a question should return a 404 error
-#         """
+    def create_project_request(self, auth_token=None, nanodegree_id=None, list_of_projects=[]):
+        """
+        Helper method for creating nanodegree projects
 
-#     def test_200_success_create_question_vote(self):
-#         """
-#         A request to upvote or downvote a question should be successful
-#         """
-#         pass
+        Returns the http response object
+        """
+        endpoint = f"api/v1/nanodegrees/{nanodegree_id}/projects"
 
-#     def test_200_success_edit_question_vote(self):
-#         """
-#         A request to edit a vote should be successful
-#         """
-#         pass
+        headers = {
+            "Authorization": f"Bearer {auth_token}"
+        }
 
-#     def test_200_success_delete_question_vote(self):
-#         """
-#         A request to delete a vote should be successful
-#         """
-#         pass
+        payload = {"projects": list_of_projects}
+
+        response_object = self.client().post(
+            endpoint, headers=headers, json=payload)
+
+        return response_object
+
+    def test_201_success_post_question(self):
+        """
+        A request to create a question should return a 201 success status if the required data is provided in the right format.
+        """
+        # Step 1: create nanodegree
+        nanodegree_details = {
+            "title": "Test Nanodegree",
+            "description": "None for now"
+        }
+
+        admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+        admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
+
+        admin_token = self.get_auth_token_from_Auth0(
+            client_id=admin_client_id, client_secret=admin_client_secret)
+
+        response_object = self.create_nanodegree_request(
+            auth_token=admin_token, nanodegree_details=nanodegree_details)
+
+        self.assertEqual(response_object.status_code, 201)
+
+        # get the id of the created nanodegree
+        response_body = response_object.get_json()
+
+        nanodegree_id = response_body['data']['id']
+
+        # Step 2: Create projects for this nanodegree
+        list_of_projects = [
+            {"title": "Fyyur: Events booking portal"}
+        ]
+
+        response_object = self.create_project_request(
+            auth_token=admin_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
+
+        self.assertEqual(response_object.status_code, 201)
+
+        # get the id of the created project
+        response_body = response_object.get_json()
+
+        # project_id = response_body['data']['id']
+
+        project_id = 1
+
+        # self.assertTrue(type(project_id) is int)
+
+        # Step 3: Enroll student in Nanodegree
+        enrollment_endpoint = f"/api/v1/nanodegrees/{nanodegree_id}/enroll"
+
+        # Get student token
+        student_client_id = os.getenv('TEST_STUDENT_CLIENT_ID')
+        student_client_secret = os.getenv('TEST_STUDENT_CLIENT_SECRET')
+
+        student_token = self.get_auth_token_from_Auth0(
+            client_id=student_client_id, client_secret=student_client_secret)
+
+        headers = {
+            "Authorization": f"Bearer {student_token}"
+        }
+
+        response_object = self.client().get(enrollment_endpoint, headers=headers)
+
+        self.assertEqual(response_object.status_code, 200)
+        # enrollment successfull
+
+        # Step 4: Create question
+
+        endpoint = 'api/v1/questions'
+
+        payload = {
+            'title': "Hi, my tests are passing. How do I stop this?",
+            'details': "Please help!!!!",
+            'nanodegree_id': nanodegree_id,
+            'project_id': project_id,
+            'github_link': None
+        }
+
+        response_object = self.client().post(endpoint, headers=headers, json=payload)
+
+        self.assertEqual(response_object.status_code, 201)
+
+        question_data = response_object.get_json()['data']
+
+        # Tests to ensure that the API returns the right shape
+        self.assertTrue('id' in question_data)
+        self.assertTrue('title' in question_data)
+        self.assertTrue('asked_by' in question_data)
+        self.assertTrue('nanodegree_id' in question_data)
+        self.assertTrue('project_id' in question_data)
+
+        # Assertions to ensure that the appropriate data types are returned
+
+        self.assertTrue(type(question_data['title']) is str)
+        self.assertTrue(type(question_data['asked_by']) is int)
+        self.assertTrue(type(question_data['nanodegree_id']) is int)
+        self.assertTrue(type(question_data['project_id']) is int)
+
+    # def test_400_error_post_question(self):
+    #     """
+    #     A request to create a new question should return a 400 error if the input data is incomplete and/or provided in the wrong format
+    #     """
+    #     endpoint = 'api/v1/questions'
+
+    #     payloads = [3, 'question', {}, {'title': "Is this a title?",
+    #                                     'details': "More details", 'asked_by': 8989898, 'project_id': 309}, (), []]
+
+    #     for payload in payloads:
+    #         response_object = self.client().post(endpoint, json=payload)
+
+    #         self.assertEqual(response_object.status_code, 400)
+
+    # def test_200_success_get_questions(self):
+    #     """
+    #     A request to get all questions should successfully return the questions in the right format
+    #     """
+    #     endpoint = 'api/v1/questions'
+
+    #     response_object = self.client().get(endpoint)
+
+    #     self.assertEqual(response_object.status_code, 200)
+
+    # def test_success_patch_question(self):
+    #     """
+    #     A request to update a question should be successful if the required input data is provided in the right format
+    #     """
+    #     pass
+
+    # def test_success_delete_question(self):
+    #     """
+    #     A request to delete a question should be successful if the user has sufficient authorization i.e, the user is the owner of the question
+    #     """
+
+    # def test_201_success_post_question_comment(self):
+    #     """
+    #     A request to post a comment on a question should be successful if the required input data is provided in the right format
+    #     """
+    #     pass
+
+    # def test_200_success_delete_question_comment(self):
+    #     """
+    #     A request to delete a comment posted on a question should be successful
+    #     """
+    #     pass
+
+    # def test_404_success_delete_question_comment(self):
+    #     """
+    #     A request to delete a non-existent/previously deleted comment on a question should return a 404 error
+    #     """
+
+    # def test_200_success_create_question_vote(self):
+    #     """
+    #     A request to upvote or downvote a question should be successful
+    #     """
+    #     pass
+
+    # def test_200_success_edit_question_vote(self):
+    #     """
+    #     A request to edit a vote should be successful
+    #     """
+    #     pass
+
+    # def test_200_success_delete_question_vote(self):
+    #     """
+    #     A request to delete a vote should be successful
+    #     """
+    #     pass
 
 
 # class AnswersTestCase(APITestSetup):
