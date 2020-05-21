@@ -15,9 +15,11 @@ class Question(Base):
 
     posted_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    nanodegree_id = db.Column(db.Integer, db.ForeignKey('nanodegree.id'), nullable=False)
+    nanodegree_id = db.Column(db.Integer, db.ForeignKey(
+        'nanodegree.id'), nullable=False, index=True)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey(
+        'project.id'), nullable=False, index=True)
 
     github_link = db.Column(db.String(150), nullable=True)
 
@@ -27,18 +29,38 @@ class Question(Base):
 
     has_accepted_answer = db.Column(db.Boolean, nullable=False, default=False)
 
-    comments = db.relationship("QuestionComment", backref="question", lazy=True)
-
+    comments = db.relationship(
+        "QuestionComment", backref="question", lazy=True)
 
     def __repr__(self):
         return f'<Question: {self.title} >'
 
+    def serialize_preview(self):
+        return {
+            "title": self.title,
+            "id": self.id,
+            "nanodegree_id": self.nanodegree_id,
+            "project_id": self.project_id,
+            "asked_by": self.posted_by
+        }
+
+    def serialize_full(self):
+        return {
+            "title": self.title,
+            "id": self.id,
+            "nanodegree_id": self.nanodegree_id,
+            "project_id": self.project_id,
+            "details": self.details,
+            "github_link": self.github_link,
+            "has_accepted_answer": self.has_accepted_answer,
+            # "answer": self.answers,
+            # "comments": self.comments
+        }
 
 
 # class CurrentVoteEnum(enum.Enum):
 #     up = 'up'
 #     down = 'down'
-
 
 
 # class CurrentVoteQuestion(Base):
@@ -55,7 +77,6 @@ class Question(Base):
 #         return f'<Vote: User {self.user_id} voted {self.current_vote} on question {self.question_id}>'
 
 
-
 class QuestionComment(Base):
     __tablename__ = "question_comment"
 
@@ -63,8 +84,8 @@ class QuestionComment(Base):
 
     details = db.Column(db.String(), nullable=False)
 
-    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
-
+    question_id = db.Column(db.Integer, db.ForeignKey(
+        'question.id'), nullable=False)
 
     def __repr__(self):
         return f'<Comment on question {self.question_id}, posted by user {self.posted_by} >'

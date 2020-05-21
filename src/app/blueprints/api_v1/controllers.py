@@ -2,7 +2,7 @@ from flask import Blueprint, request, g, session, jsonify, abort, make_response,
 from flask_sqlalchemy import SQLAlchemy
 from marshmallow import ValidationError
 from src.app.blueprints.api_v1.utils.auth0_helper import requires_auth, get_jwt_subject
-from src.app.blueprints.api_v1.utils.input_validators import Nanodegree_Input_Schema, Project_Input_Schema
+from src.app.blueprints.api_v1.utils.input_validators import Nanodegree_Input_Schema, Project_Input_Schema, Question_Input_Schema
 from src.app.models.user import User
 from src.app.models.nanodegree import Nanodegree
 from src.app.models.project import Project
@@ -17,7 +17,6 @@ api_v1_bp = Blueprint('api_v1', __name__)
 
 
 @api_v1_bp.route('/')
-@requires_auth(permission="create:nanodegree")
 def api_home():
     return 'Hello API', 200
 
@@ -274,6 +273,109 @@ def enroll_in_nanodegree(nanodegree_id):
         }
 
         return jsonify(response_object)
+
+    except:
+        print(sys.exc_info())
+        abort(500)
+
+    finally:
+        db.session.close()
+
+
+@api_v1_bp.route('/questions', methods=['POST'])
+@requires_auth(permission="create:question")
+def create_new_question(jwt):
+
+    # payload = {
+    #     'title': "Hi, my tests are passing. How do I stop this?",
+    #     'details': "Please help!!!!",
+    #     'asked_by': '8989898',
+    #     'nanodegree_id': nanodegree_id,
+    #     'project_id': project_id,
+    #     'github_link': None
+    # }
+
+    question = request.get_json()
+
+    try:
+        question_payload_is_valid = Question_Input_Schema().load(question)
+
+    except ValidationError as error:
+        print("Validation error", error.messages)
+        abort(400)
+
+    nanodegree_id = question['nanodegree_id']
+    project_id = question['project_id']
+    title = question['title']
+    details = question['details']
+    github_link = question['github_link']
+
+    # get nanodegree
+    nanodegree = Nanodegree.query.get(nanodegree_id)
+
+    if nanodegree is None:
+        print("Nanodegree not found")
+        abort(404)
+
+    # get project
+    project = Project.query.get(project_id)
+
+    if project is None:
+        print("Project not found")
+        abort(404)
+
+    try:
+        # Find out who is making this request
+        jwt_subject = get_jwt_subject()
+
+        # check if the student is enrolled in that nanodegree and return an error if not
+        already_enrolled_student = nanodegree.students.filter_by(
+            jwt_subject=jwt_subject).first()
+
+        if already_enrolled_student is None:
+            return make_response(jsonify({
+                "success": False,
+                "message": "The student is not enrolled in the Nanodegree so they are not allowed to post a question"
+            }), 403)
+
+        # get the student
+        student = User.query.filter_by(jwt_subject=jwt_subject).first()
+
+        # create question
+        question = Question(title=title,
+                            details=details, github_link=github_link, posted_by=student.id, project_id=project.id, nanodegree_id=nanodegree.id)
+
+        # assign question to user
+        # student.questions.append(question)
+
+        # # assign question to project
+        # project.questions.append(question)
+
+        # # assign question to nanodegree
+        # nanodegree.questions.append(question)
+
+        question.save()
+
+        # get back the question data
+        response_data = {
+            "success": True,
+            "data": question.serialize_preview()
+        }
+
+        return make_response(jsonify(response_data), 201)
+
+    except:
+        print(sys.exc_info())
+        abort(500)
+
+    finally:
+        db.session.close()
+
+
+@api_v1_bp.route('/questions', methods=['GET'])
+def get_questions():
+    try:
+        return jsonify({})
 
     except:
         print(sys.exc_info())
