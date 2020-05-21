@@ -713,19 +713,90 @@ class QuestionsTestCase(APITestSetup):
         self.assertTrue(type(question_data['nanodegree_id']) is int)
         self.assertTrue(type(question_data['project_id']) is int)
 
-    # def test_400_error_post_question(self):
-    #     """
-    #     A request to create a new question should return a 400 error if the input data is incomplete and/or provided in the wrong format
-    #     """
-    #     endpoint = 'api/v1/questions'
+    def test_400_error_post_question(self):
+        """
+        A request to create a new question should return a 400 error if the input data is incomplete and/or provided in the wrong format
+        """
 
-    #     payloads = [3, 'question', {}, {'title': "Is this a title?",
-    #                                     'details': "More details", 'asked_by': 8989898, 'project_id': 309}, (), []]
+        # Step 1: create nanodegree
+        nanodegree_details = {
+            "title": "Test Nanodegree",
+            "description": "None for now"
+        }
 
-    #     for payload in payloads:
-    #         response_object = self.client().post(endpoint, json=payload)
+        admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+        admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
 
-    #         self.assertEqual(response_object.status_code, 400)
+        admin_token = self.get_auth_token_from_Auth0(
+            client_id=admin_client_id, client_secret=admin_client_secret)
+
+        response_object = self.create_nanodegree_request(
+            auth_token=admin_token, nanodegree_details=nanodegree_details)
+
+        self.assertEqual(response_object.status_code, 201)
+
+        # get the id of the created nanodegree
+        response_body = response_object.get_json()
+
+        nanodegree_id = response_body['data']['id']
+
+        # Step 2: Create projects for this nanodegree
+        list_of_projects = [
+            {"title": "Fyyur: Events booking portal"}
+        ]
+
+        response_object = self.create_project_request(
+            auth_token=admin_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
+
+        self.assertEqual(response_object.status_code, 201)
+
+        # get the id of the created project
+        response_body = response_object.get_json()
+
+        # project_id = response_body['data']['id']
+
+        project_id = 1
+
+        # self.assertTrue(type(project_id) is int)
+
+        # Step 3: Enroll student in Nanodegree
+        enrollment_endpoint = f"/api/v1/nanodegrees/{nanodegree_id}/enroll"
+
+        # Get student token
+        student_client_id = os.getenv('TEST_STUDENT_CLIENT_ID')
+        student_client_secret = os.getenv('TEST_STUDENT_CLIENT_SECRET')
+
+        student_token = self.get_auth_token_from_Auth0(
+            client_id=student_client_id, client_secret=student_client_secret)
+
+        headers = {
+            "Authorization": f"Bearer {student_token}"
+        }
+
+        response_object = self.client().get(enrollment_endpoint, headers=headers)
+
+        self.assertEqual(response_object.status_code, 200)
+        # enrollment successfull
+
+        # Step 4: Create question
+
+        endpoint = 'api/v1/questions'
+
+        payload = {
+            'title': "Hi, my tests are passing. How do I stop this?",
+            'details': "Please help!!!!",
+            'nanodegree_id': nanodegree_id,
+            'project_id': project_id,
+            'github_link': None
+        }
+
+        payloads = [3, 'question', {}, {'title': "Is this a title?",
+                                        'details': {}, 'asked_by': 8989898, 'project_id': 309}, (), []]
+
+        for payload in payloads:
+            response_object = self.client().post(endpoint, headers=headers, json=payload)
+
+            self.assertEqual(response_object.status_code, 400)
 
     # def test_200_success_get_questions(self):
     #     """
