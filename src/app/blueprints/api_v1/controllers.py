@@ -1,4 +1,4 @@
-from flask import Blueprint, request, g, session, jsonify, abort, make_response, current_app
+from flask import Blueprint, current_app, request, jsonify, abort, make_response
 from flask_sqlalchemy import SQLAlchemy
 from marshmallow import ValidationError
 from src.app.blueprints.api_v1.utils.auth0_helper import requires_auth, get_jwt_subject
@@ -6,8 +6,8 @@ from src.app.blueprints.api_v1.utils.input_validators import Nanodegree_Input_Sc
 from src.app.models.user import User
 from src.app.models.nanodegree import Nanodegree
 from src.app.models.project import Project
-from src.app.models.question import Question, QuestionComment  # , CurrentVoteQuestion
-from src.app.models.answer import Answer, AnswerComment  # , CurrentVoteAnswer
+from src.app.models.question import Question
+from src.app.models.answer import Answer
 import sys
 
 db = SQLAlchemy()
@@ -18,7 +18,7 @@ api_v1_bp = Blueprint('api_v1', __name__)
 
 @api_v1_bp.route('/')
 def api_home():
-    return 'Hello API', 200
+    return jsonify({"message": "Welcome to the Student Hub API"})
 
 
 @api_v1_bp.route('/nanodegrees', methods=['POST'])
@@ -160,8 +160,8 @@ def get_nanodegree_projects(nanodegree_id):
 
 
 @api_v1_bp.route('/nanodegrees/<int:nanodegree_id>/students', methods=['GET'])
-# @requires_auth(permission="get:nanodegree-students")
-def get_nanodegree_students(nanodegree_id):
+@requires_auth(permission="get:nanodegree-students")
+def get_nanodegree_students(jwt, nanodegree_id):
     """
     Returns a paginated list of students enrolled in a given nanodegree
     """
@@ -285,15 +285,9 @@ def enroll_in_nanodegree(nanodegree_id):
 @api_v1_bp.route('/questions', methods=['POST'])
 @requires_auth(permission="create:question")
 def create_new_question(jwt):
-
-    # payload = {
-    #     'title': "Hi, my tests are passing. How do I stop this?",
-    #     'details': "Please help!!!!",
-    #     'asked_by': '8989898',
-    #     'nanodegree_id': nanodegree_id,
-    #     'project_id': project_id,
-    #     'github_link': None
-    # }
+    """
+    Creates a new question on the platform
+    """
 
     question = request.get_json()
 
@@ -374,8 +368,161 @@ def create_new_question(jwt):
 
 @api_v1_bp.route('/questions', methods=['GET'])
 def get_questions():
+    """
+    Returns a paginated list of questions on the platform
+    """
+
+    request_body = request.get_json(
+    ) or {'page': 1, 'questions_per_page': current_app.config['QUESTIONS_PER_PAGE']}
+
+    page = request_body['page'] or 1
+
+    if page <= 0:
+        abort(400)
+
+    questions_per_page = request_body['questions_per_page'] or current_app.config[
+        'QUESTIONS_PER_PAGE']
+
+    if questions_per_page <= 0:
+        abort(400)
+
+    start = ((page - 1) * questions_per_page) + 1
+
+    questions = Question.query
+
+    total_number_of_questions = questions.count()
+
+    questions_pagination_object = questions.paginate(
+        start, questions_per_page, False)
+
+    if total_number_of_questions < 1:
+        abort(404)
+
     try:
-        return jsonify({})
+        has_next_page = questions_pagination_object.has_next
+
+        has_prev_page = questions_pagination_object.has_prev
+
+        next_page = None
+
+        previous_page = None
+
+        if has_next_page:
+            next_page = page + 1
+
+        if has_prev_page:
+            previous_page = page - 1
+
+        list_of_questions = [question.serialize_preview()
+                             for question in questions_pagination_object.items]
+
+        response_data = {
+            "success": True,
+            "data": {
+                "questions": list_of_questions,
+                "total_number_of_questions": total_number_of_questions,
+                "has_next_page": has_next_page,
+                "next_page": next_page,
+                "has_previous_page": has_prev_page,
+                "previous_page": previous_page
+            }
+        }
+
+        return jsonify(response_data)
+
+    except:
+        print(sys.exc_info())
+        abort(500)
+
+    finally:
+        db.session.close()
+
+
+@api_v1_bp.route('/questions/<int:question_id>', methods=['PATCH'])
+@requires_auth(permission="update:question")
+def update_question(jwt, question_id):
+    "Updates the details of a given question the person making the request is the same as the original poster and returns the updated question"
+
+    who_made_the_request = get_jwt_subject()
+
+    question_to_be_edited = Question.query.get(question_id)
+
+    if question_to_be_edited is None:
+        abort(404)
+
+    original_poster = User.query.get(question_to_be_edited.posted_by)
+
+    if original_poster.jwt_subject != who_made_the_request:
+        abort(403)
+
+    request_payload = request.get_json()
+
+    title = request_payload.get('title', question_to_be_edited.title)
+    details = request_payload.get('details', question_to_be_edited.details)
+    github_link = request_payload.get(
+        'github_link', question_to_be_edited.github_link)
+
+    # validate input
+    if type(title) != str:
+        return make_response(jsonify({"message": "bad title"}), 400)
+
+    if type(details) != str:
+        return make_response(jsonify({"message": "bad details"}), 400)
+        # abort(400)
+
+    if type(github_link) not in [str, None]:
+        return make_response(jsonify({"message": "bad link"}), 400)
+        # abort(400)
+
+    try:
+        question_to_be_edited.title = title
+
+        question_to_be_edited.details = details
+
+        question_to_be_edited.github_link = github_link
+
+        question_to_be_edited.update()
+
+        question = question_to_be_edited
+
+        response_data = {"success": True,
+                         "message": "Question successfully updated",
+                         "data": question.serialize_preview()}
+
+        return jsonify(response_data)
+
+    except:
+        print(sys.exc_info())
+        abort(500)
+
+    finally:
+        db.session.close()
+
+
+@api_v1_bp.route('/questions/<int:question_id>', methods=['DELETE'])
+@requires_auth(permission="delete:question")
+def delete_question(jwt, question_id):
+    "Marks a given question as deleted if the person making the request is the same as the original poster"
+
+    who_made_the_request = get_jwt_subject()
+
+    question_to_be_deleted = Question.query.get(question_id)
+
+    if question_to_be_deleted is None:
+        abort(404)
+
+    original_poster = User.query.get(question_to_be_deleted.posted_by)
+
+    if original_poster.jwt_subject != who_made_the_request:
+        abort(403)
+
+    try:
+        question_to_be_edited.is_deleted = True
+
+        response_data = {"success": True,
+                         "message": "Question successfully deleted"}
+
+        return jsonify(response_data)
 
     except:
         print(sys.exc_info())
