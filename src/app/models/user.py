@@ -1,8 +1,6 @@
 from flask import current_app
 from src.app.models.base import Base
 from src.app.models.nanodegree import nanodegree_enrollments
-from src.app.models.question import QuestionComment
-from src.app.models.answer import AnswerComment
 from src.app import db
 
 
@@ -19,26 +17,8 @@ class User(Base):
     # questions
     questions = db.relationship('Question', backref="user", lazy=True)
 
-    question_comments = db.relationship(
-        'QuestionComment', backref="user", lazy=True)
-
     # anwers
     answers = db.relationship('Answer', backref="user", lazy=True)
-
-    answer_comments = db.relationship(
-        'AnswerComment', backref="user", lazy=True)
-
-    # question vote M2M
-
-    # answer vote M2M
-
-    # figure out how to get the following fields from the user
-
-    # email = db.Column(db.String(150), nullable=True)
-
-    # firstname = db.Column(db.String(150), nullable=True)
-
-    # lastname = db.Column(db.String(150), nullable=True)
 
     def serialize(self):
         return {"id": self.id}
