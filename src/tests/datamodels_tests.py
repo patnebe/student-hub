@@ -6,15 +6,15 @@ from src.tests.base import TestSetup
 from src.app.models.user import User
 from src.app.models.nanodegree import Nanodegree
 from src.app.models.project import Project
-from src.app.models.question import Question, QuestionComment#, CurrentVoteQuestion
-from src.app.models.answer import Answer, AnswerComment#, CurrentVoteAnswer
-
+from src.app.models.question import Question
+from src.app.models.answer import Answer
 
 
 class UserModelTestCases(TestSetup):
     """
     Tests to ensure that CRUD operations on the user model work as expected
     """
+
     def test_successful_user_creation(self):
         """Test successful creation of user"""
 
@@ -29,7 +29,6 @@ class UserModelTestCases(TestSetup):
         self.assertEqual(type(list_of_users), list)
         self.assertEqual(len(list_of_users), 2)
 
-
     def test_unique_constraint_error_user_creation(self):
         """Ensure that an integrity error is raised when the same user is inserted twice into the db"""
         try:
@@ -42,7 +41,6 @@ class UserModelTestCases(TestSetup):
         except sqlalchemy.exc.IntegrityError:
             self.assertTrue(True)
 
-    
 
 class NanodegreeModelTestCases(TestSetup):
     """
@@ -52,11 +50,13 @@ class NanodegreeModelTestCases(TestSetup):
     def test_successful_nanodegree_creation(self):
         """Test successful creation of nanodegree"""
 
-        FSND = Nanodegree(title="Full Stack Developer Nanodegree", description="None for now")
+        FSND = Nanodegree(title="Full Stack Developer Nanodegree",
+                          description="None for now")
 
         FSND.save()
 
-        DEND = Nanodegree(title="Data Engineer Nanodegree", description="None for now")
+        DEND = Nanodegree(title="Data Engineer Nanodegree",
+                          description="None for now")
 
         DEND.save()
 
@@ -64,7 +64,6 @@ class NanodegreeModelTestCases(TestSetup):
 
         self.assertEqual(type(list_of_nanodegrees), list)
         self.assertEqual(len(list_of_nanodegrees), 2)
-
 
 
 class ProjectModelTestCases(TestSetup):
@@ -76,7 +75,8 @@ class ProjectModelTestCases(TestSetup):
         """Test successful creation of project"""
 
         try:
-            FSND = Nanodegree(title="Full Stack Developer Nanodegree", description="None for now")
+            FSND = Nanodegree(
+                title="Full Stack Developer Nanodegree", description="None for now")
 
             fyyur = Project(title="Fyyur: Events booking site")
 
@@ -84,7 +84,7 @@ class ProjectModelTestCases(TestSetup):
 
             FSND.projects.append(fyyur)
             FSND.projects.append(coffee_shop)
-            
+
             FSND.save()
             fyyur.save()
             coffee_shop.save()
@@ -95,13 +95,13 @@ class ProjectModelTestCases(TestSetup):
             self.assertTrue(len(list_of_projects), 3)
 
             for project in list_of_projects:
-                
-                self.assertEqual(project.nanodegree.title, "Full Stack Developer Nanodegree")
-        
+
+                self.assertEqual(project.nanodegree.title,
+                                 "Full Stack Developer Nanodegree")
+
         except:
             self.assertTrue(False)
 
-        
 
 class Question_And_Answer_Models_Test_Cases(TestSetup):
     """
@@ -112,15 +112,17 @@ class Question_And_Answer_Models_Test_Cases(TestSetup):
         """Test successful creation of question and answer"""
 
         user1 = User(jwt_subject="loakjdpao33434")
-        
-        FSND = Nanodegree(title="Full Stack Developer Nanodegree", description="None for now")
+
+        FSND = Nanodegree(title="Full Stack Developer Nanodegree",
+                          description="None for now")
 
         fyyur = Project(title="Fyyur: Events booking site")
 
-        question_one = Question(title="Hi, is there an easier way to do this?", details="None for now")
+        question_one = Question(
+            title="Hi, is there an easier way to do this?", details="None for now")
 
-        answer_one = Answer(details="Tbh, I don't know. We'll have to check online")
-
+        answer_one = Answer(
+            details="Tbh, I don't know. We'll have to check online")
 
         question_one.answers.append(answer_one)
         user1.answers.append(answer_one)
@@ -143,52 +145,3 @@ class Question_And_Answer_Models_Test_Cases(TestSetup):
         self.assertEqual(question_one.project_id, 1)
         self.assertEqual(len(question_one.answers), 1)
         self.assertEqual(answer_one.question_id, 1)
-
-
-class Comments_Test_Cases(TestSetup):
-    """
-    Tests to ensure that comments models work as expected
-    """
-
-    def test_add_comments(self):
-        user1 = User(jwt_subject="loakjdpao33434")
-
-        user2 = User(jwt_subject="qlkowineqlekwq")
-        
-        FSND = Nanodegree(title="Full Stack Developer Nanodegree", description="None for now")
-
-        fyyur = Project(title="Fyyur: Events booking site")
-
-        question_one = Question(title="Hi, is there an easier way to do this?", details="None for now")
-
-        answer_one = Answer(details="Tbh, I don't know. We'll have to check online")
-
-        question_comment = QuestionComment(details="Thanks for asking this. Now we wait for a response!")
-
-        answer_comment = AnswerComment(details="Okay no problem. I'll do more research on this.")
-
-        user2.question_comments.append(question_comment)
-        user2.answer_comments.append(answer_comment)
-        user1.answers.append(answer_one)
-        user1.questions.append(question_one)
-
-        question_one.answers.append(answer_one)
-        question_one.comments.append(question_comment)
-
-        answer_one.comments.append(answer_comment)
-        
-
-        fyyur.questions.append(question_one)
-        FSND.projects.append(fyyur)
-        FSND.questions.append(question_one)
-
-        question_one.save()
-        answer_one.save()
-        question_comment.save()
-        answer_comment.save()
-        user1.save()
-        
-        fyyur.save()
-        FSND.save()
-
-        self.assertEqual(answer_comment.posted_by, 2)
