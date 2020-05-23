@@ -13,16 +13,16 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /student-hub
 RUN mkdir /student-hub/src
 COPY ./src /student-hub/src
+COPY ./requirements.txt /student-hub/
 
 # upgrade pip and install dependencies
 WORKDIR /student-hub
 RUN pip install --upgrade pip
-RUN pip install -r src/requirements.txt
+RUN pip install -r requirements.txt
 
 # create new user
 RUN adduser --disabled-login fsndstudenthub
 USER fsndstudenthub
 
 # start gunicorn server
-WORKDIR /student-hub
 CMD gunicorn -b :$PORT src.run:app
