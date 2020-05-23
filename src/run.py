@@ -4,9 +4,8 @@ from .app import create_app, db
 from .app.models.user import User
 from .app.models.nanodegree import Nanodegree, nanodegree_enrollments
 from .app.models.project import Project
-from .app.models.question import Question, QuestionComment  # , CurrentVoteQuestion
-from .app.models.answer import Answer, AnswerComment  # , CurrentVoteAnswer
-
+from .app.models.question import Question
+from .app.models.answer import Answer
 
 app = create_app(DevelopmentConfig)
 
@@ -19,9 +18,5 @@ def make_shell_context():
         "Nanodegree": Nanodegree,
         "Project": Project,
         'Question': Question,
-        # "Question_Vote": CurrentVoteQuestion,
-        "Question_Comment": QuestionComment,
-        "Answer": Answer,
-        # "Answer_Vote": CurrentVoteAnswer,
-        "Answer_Comment": AnswerComment
+        "Answer": Answer
     }

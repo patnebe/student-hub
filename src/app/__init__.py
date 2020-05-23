@@ -21,10 +21,12 @@ def create_app(config_class=DevelopmentConfig):
     app.config.from_object(config_class)
 
     # Import blueprints
+    from src.app.blueprints.main.controllers import main_bp
     from src.app.blueprints.api_v1.controllers import api_v1_bp
     from src.app.blueprints.errors.handlers import errors_bp
 
     # Register blueprints
+    app.register_blueprint(main_bp)
     app.register_blueprint(errors_bp)
     app.register_blueprint(api_v1_bp, url_prefix='/api/v1')
 

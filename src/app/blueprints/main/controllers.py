@@ -1,5 +1,8 @@
-# You can register another blueprint here.
+from flask import Blueprint, jsonify
 
-# For example, this could be the part of your website this isn't available for public consumption as an API. E.g the internal/external pages, dashboards, etc.
+main_bp = Blueprint('main', __name__)
 
-# This main section can also be combined with the login functionality present within the auth blueprint.
+
+@main_bp.route('/')
+def api_home():
+    return jsonify({"message": "Welcome to the Student Hub API"})
