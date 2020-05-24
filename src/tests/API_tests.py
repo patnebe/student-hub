@@ -539,8 +539,6 @@ class NanodegreeTestCase(TestSetup):
 class QuestionsTestCase(TestSetup):
     """Test cases to ensure that CRUD operations on the Question model work as expected"""
 
-    admin_token = None
-    student_token = None
     invalid_random_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
     def get_auth_token_from_Auth0(self, client_id=None, client_secret=None):
@@ -1314,26 +1312,97 @@ class QuestionsTestCase(TestSetup):
         self.assertEqual(response_object.status_code, 200)
 
     def test_403_error_delete_question(self):
-        pass
+        """
+        A request to delete a question should return a 403 error if the user isn't the owner of the question
+        """
 
+        # Step 1: create nanodegree
+        nanodegree_details = {
+            "title": "Test Nanodegree",
+            "description": "None for now"
+        }
 
-class AnswersTestCase(TestSetup):
-    """Test cases to ensure that CRUD operations on the Answer model work as expected"""
+        admin_client_id = os.getenv('TEST_ADMIN_CLIENT_ID')
+        admin_client_secret = os.getenv('TEST_ADMIN_CLIENT_SECRET')
 
-    def test_201_success_post_answer(self):
-        pass
+        admin_token = self.get_auth_token_from_Auth0(
+            client_id=admin_client_id, client_secret=admin_client_secret)
 
-    def test_201_success_get_answers(self):
-        pass
+        response_object = self.create_nanodegree_request(
+            auth_token=admin_token, nanodegree_details=nanodegree_details)
 
-    def test_200_success_patch_answer(self):
-        pass
+        self.assertEqual(response_object.status_code, 201)
 
-    def test_403_error_patch_answer(self):
-        pass
+        # get the id of the created nanodegree
+        response_body = response_object.get_json()
 
-    def test_200_success_delete_answer(self):
-        pass
+        nanodegree_id = response_body['data']['id']
 
-    def test_403_error_delete_answer(self):
-        pass
+        # Step 2: Create projects for this nanodegree
+        list_of_projects = [
+            {"title": "Fyyur: Events booking portal"}
+        ]
+
+        response_object = self.create_project_request(
+            auth_token=admin_token, nanodegree_id=nanodegree_id, list_of_projects=list_of_projects)
+
+        self.assertEqual(response_object.status_code, 201)
+
+        # get the id of the created project
+        response_body = response_object.get_json()
+
+        # project_id = response_body['data']['id']
+
+        project_id = 1
+
+        # self.assertTrue(type(project_id) is int)
+
+        # Step 3: Enroll student in Nanodegree
+        enrollment_endpoint = f"/api/v1/nanodegrees/{nanodegree_id}/enroll"
+
+        # Get student token
+        student_client_id = os.getenv('TEST_STUDENT_CLIENT_ID')
+        student_client_secret = os.getenv('TEST_STUDENT_CLIENT_SECRET')
+
+        student_token = self.get_auth_token_from_Auth0(
+            client_id=student_client_id, client_secret=student_client_secret)
+
+        headers = {
+            "Authorization": f"Bearer {student_token}"
+        }
+
+        response_object = self.client().get(enrollment_endpoint, headers=headers)
+
+        self.assertEqual(response_object.status_code, 200)
+        # enrollment successfull
+
+        # Step 4: Create question
+
+        endpoint = 'api/v1/questions'
+
+        payload = {
+            'title': "Hi, my tests are passing. How do I stop this?",
+            'details': "Please help!!!!",
+            'nanodegree_id': nanodegree_id,
+            'project_id': project_id,
+            'github_link': None
+        }
+
+        response_object = self.client().post(endpoint, headers=headers, json=payload)
+
+        self.assertEqual(response_object.status_code, 201)
+
+        # Step 5: Delete question
+
+        # Get question ID
+        question_id = response_object.get_json()['data']['id']
+
+        # Make a delete request
+        endpoint = f'api/v1/questions/{question_id}'
+
+        response_object = self.client().delete(
+            endpoint, headers={
+                "Authorization": f"Bearer {admin_token}"
+            })
+
+        self.assertEqual(response_object.status_code, 403)
