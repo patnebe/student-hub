@@ -18,3 +18,12 @@ class Answer(Base):
 
     def __repr__(self):
         return f'<Answer to question {self.question_id} posted by {self.posted_by}>'
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "posted_by": self.posted_by,
+            "details": self.details,
+            "accepted": self.accepted,
+            "timestamp": self.date_created
+        }
