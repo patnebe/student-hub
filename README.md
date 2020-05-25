@@ -67,7 +67,6 @@ createdb test_knowledge_hub
 Next run the database migrations by executing the following commands:
 
 ```bash
- flask db migrate
  flask db upgrade
 ```
 
@@ -257,10 +256,10 @@ TEST_ADMIN_CLIENT_SECRET="enter-yours"
 
 ### Testing the flask app locally
 
-Ensure the environment variables have been properly configured using the env file then from the `src` directory, execute:
+Ensure the environment variables have been properly configured using the env file then from the `src/tests` directory, execute:
 
 ```bash
-pytest tests/*
+pytest API_tests.py datamodels_tests.py
 ```
 
 ---
