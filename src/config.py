@@ -31,11 +31,11 @@ class DevelopmentConfig(object):
 
     DEBUG = True
 
-    STUDENTS_PER_PAGE = int(os.environ.get(
-        'STUDENTS_PER_PAGE'))
+    STUDENTS_PER_PAGE = os.environ.get(
+        'STUDENTS_PER_PAGE')
 
-    QUESTIONS_PER_PAGE = int(os.environ.get(
-        'QUESTIONS_PER_PAGE'))
+    QUESTIONS_PER_PAGE = os.environ.get(
+        'QUESTIONS_PER_PAGE')
 
     # Application threads. A common general assumption is
     # using 2 per available processor cores - to handle
@@ -65,11 +65,11 @@ class TestConfig(object):
 
     DEBUG = True
 
-    STUDENTS_PER_PAGE = int(os.environ.get(
-        'STUDENTS_PER_PAGE'))
+    STUDENTS_PER_PAGE = os.environ.get(
+        'STUDENTS_PER_PAGE')
 
-    QUESTIONS_PER_PAGE = int(os.environ.get(
-        'QUESTIONS_PER_PAGE'))
+    QUESTIONS_PER_PAGE = os.environ.get(
+        'QUESTIONS_PER_PAGE')
 
 
 # Remember to setup a deployment config class

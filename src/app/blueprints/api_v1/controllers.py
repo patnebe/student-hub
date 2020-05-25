@@ -172,15 +172,16 @@ def get_nanodegree_students(jwt, nanodegree_id):
         abort(404)
 
     request_body = request.get_json(
-    ) or {'page': 1, 'students_per_page': current_app.config['STUDENTS_PER_PAGE']}
+    ) or {'page': 1, 'students_per_page': int(current_app.config[
+        'STUDENTS_PER_PAGE'])}
 
     page = request_body['page'] or 1
 
     if page <= 0:
         abort(400)
 
-    students_per_page = request_body['students_per_page'] or current_app.config[
-        'STUDENTS_PER_PAGE']
+    students_per_page = request_body['students_per_page'] or int(current_app.config[
+        'STUDENTS_PER_PAGE'])
 
     if students_per_page <= 0:
         abort(400)
@@ -373,15 +374,14 @@ def get_questions():
     """
 
     request_body = request.get_json(
-    ) or {'page': 1, 'questions_per_page': current_app.config['QUESTIONS_PER_PAGE']}
+    ) or {'page': 1, 'questions_per_page': int(current_app.config['QUESTIONS_PER_PAGE'])}
 
     page = request_body['page'] or 1
 
     if page <= 0:
         abort(400)
 
-    questions_per_page = request_body['questions_per_page'] or current_app.config[
-        'QUESTIONS_PER_PAGE']
+    questions_per_page = request_body['questions_per_page'] or int(current_app.config['QUESTIONS_PER_PAGE'])
 
     if questions_per_page <= 0:
         abort(400)
