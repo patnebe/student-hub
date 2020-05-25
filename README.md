@@ -285,12 +285,17 @@ python get_tokens.py
 
 Next, refer to the API Documentation above for the request methods, required payloads, access control (roles expected for the bearer token sent with each request), and expected results associated with each endpoint.
 
-_Sample request_
+_Sample requests_
 
 ```
 curl --request POST \
   --url https://udacity-student-hub.herokuapp.com/api/v1/nanodegrees \
   --header "authorization: Bearer ${admin_token}" \
   --header "Content-Type: application/json" \
-  --data '{"title": "Full Stack Developer Nanodegree","description": ""}'
+  --data '{"title": "Full Stack Developer Nanodegree","description": "This goal of the Full Stack Web Developer Nanodegree program is to equip learners with the unique skills they need to build database-backed APIs and web applications."}'
+```
+
+```
+curl --request GET \
+  --url https://udacity-student-hub.herokuapp.com/api/v1/nanodegrees
 ```
