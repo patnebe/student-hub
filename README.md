@@ -6,7 +6,7 @@ This is my final project for the Udacity Full Stack Developer Nanodegree. It is 
 
 Trello Board: https://trello.com/b/dnp5X41N/student-hub
 
----
+<br>
 
 ## Getting Started
 
@@ -31,21 +31,25 @@ pip install -r requirements.txt
 
 This will install all of the required packages we selected within the `requirements.txt` file.
 
-##### Key Dependencies
+##### Tech Stack/Key Dependencies
 
-- [Flask](http://flask.pocoo.org/) is a lightweight backend microservices framework. Flask is required to handle requests and responses.
+- PostgreSQL database
 
-- [SQLAlchemy](https://www.sqlalchemy.org/) and [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/) are libraries to handle the lightweight sqlite database. Since we want you to focus on auth, we handle the heavy lift for you in `./src/database/models.py`. We recommend skimming this code first so you know how to interface with the Drink model.
+- Auth0 for Authentication and Authorization
+
+- [Flask](http://flask.pocoo.org/), a lightweight backend microservices framework. Flask is required to handle requests and responses.
+
+- [Flask-Migrate](https://flask-migrate.readthedocs.io/en/latest/) for creating and running schema migrations
+
+- [SQLAlchemy](https://www.sqlalchemy.org/) and [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/) are libraries to interact with the database models.
 
 - [jose](https://python-jose.readthedocs.io/en/latest/) JavaScript Object Signing and Encryption for JWTs. Useful for encoding, decoding, and verifying JWTS
 
 <br/>
 
----
+### Running the local development server
 
-## Running the local development server
-
-From home directory first ensure you are working using your created virtual environment. Then navigate into the src directory by executing:
+From `student-hub` directory first ensure you are working using your created virtual environment. Then navigate into the src directory by executing:
 
 ```bash
 cd src
@@ -79,8 +83,6 @@ flask run
 
 <br/>
 
----
-
 ## API Design and Documentation
 
 ### 1. MVP Requirements
@@ -98,7 +100,7 @@ These are the key user stories for this product are:
 
 ### 2. Data Models
 
-- There are five data models which power this product namely Nanodegree, Project, Question, User, Answer. One to Many, and Many-to-many relationships exist between these models.
+- There are five data models which power this product: Nanodegree, Project, Question, User, Answer. One to Many, and Many-to-many relationships exist between these models.
 - They can be found in the `student-hub/src/app/models` directory
 
 ### 3. Role Based Access Control
@@ -123,6 +125,7 @@ Creates a new nanodgree and returns the newly created nanodegree
   }
 - Success status code - 201
 - Required permission - "create:nanodegree"
+- Role - Admin
 
 #### `GET /api/v1/nanodegrees`
 
@@ -138,6 +141,7 @@ Returns a list of nanodegrees
   }
 - Success status code - 200
 - Required permission - None
+- Role - None
 
 #### `POST /api/v1/nanodegrees/id/projects`
 
@@ -217,19 +221,11 @@ Get a paginated list of all the questions on the platform
 
 <br/>
 
----
-
-## Testing the flask app locally
-
-From the `src` directory, execute:
-
-```bash
-pytest tests/*
-```
+## Testing
 
 A couple things to note about the tests:
 
-- An AUTH0 machine to machine application was setup to automate the process of getting credentials to test RBAC functionality
+- An AUTH0 machine to machine application was setup to automate the process of getting the tokens to needed to test RBAC functionality
 - The credentials are stored within a .env file which will be placed in the src folder i.e. the student-hub/src directory
 - Here's what the env file should look like
 
@@ -243,33 +239,58 @@ DATABASE_USERNAME={your_username}
 QUESTIONS_PER_PAGE=10
 STUDENTS_PER_PAGE=10
 
-#Auth0 Login credentials
+#Auth0 Login credentials (Create an Auth0 API with the permissions listed above. Remember to enable RBAC for this API)
 AUTH0_TENANT_DOMAIN={your_auth0_tenant_domain}
 AUTH0_API_AUDIENCE={your_api_audience}
 AUTH0_ALGORITHMS={alorithms_setup_on_Auth0}
 
-#Student (create a machine-to-machine application on your Auth0 API with the student level permissions listed above)
+#Student (create a machine-to-machine application on your Auth0 API and assign the student level permissions to it)
 TEST_STUDENT_CLIENT_ID="enter-yours"
 TEST_STUDENT_CLIENT_SECRET="enter-yours"
 
-#Admin (create a machine-to-machine application on your Auth0 API with the admin level permissions listed above)
+#Admin (create a machine-to-machine application on your Auth0 API and assign the admin level permissions to it)
 TEST_ADMIN_CLIENT_ID="enter-yours"
 TEST_ADMIN_CLIENT_SECRET="enter-yours"
 ```
 
-<br/>
+---
+
+### Testing the flask app locally
+
+Ensure the environment variables have been properly configured using the env file then from the `src` directory, execute:
+
+```bash
+pytest tests/*
+```
 
 ---
 
-## Testing the flask app hosted live on Heroku
+### Testing the flask app hosted live on Heroku
 
 Live Heroku Deployment: https://udacity-student-hub.herokuapp.com
 <br/>
 
 First obtain your access tokens by carrying out the following steps:
 
-1. Coming soon
-2. Coming soon
-3. Coming soon
+1. Ensure you're currently working in the virtual environment created above, all dependencies have been installed, and environment variables have been set within the env file
+2. From the `student-hub/src/tests` directory, execute
 
-Next, refer to the API Documentation above for the request methods, required payloads, access control, and expected results associated with each endpoint.
+```
+python get_tokens.py
+```
+
+3. Check for a newly created tokens.txt file in the `student-hub/src/tests` directory.
+4. The `student_token` and the `admin_token` should be present within a dictionary in the newly created tokens.txt file.
+5. Export them to the terminal to make requests using curl or add them to authorization headers if you intend to test the API using Postman.
+
+Next, refer to the API Documentation above for the request methods, required payloads, access control (roles expected for the bearer token sent with each request), and expected results associated with each endpoint.
+
+_Sample request_
+
+```
+curl --request POST \
+  --url https://udacity-student-hub.herokuapp.com/api/v1/nanodegrees \
+  --header "authorization: Bearer ${admin_token}" \
+  --header "Content-Type: application/json" \
+  --data '{"title": "Full Stack Developer Nanodegree","description": ""}'
+```
