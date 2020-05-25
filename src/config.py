@@ -1,7 +1,10 @@
 import os
+from os.path import dirname, abspath
+
 from dotenv import load_dotenv
 
-basedir = os.path.abspath(os.path.dirname(__file__))
+basedir = dirname((abspath(__file__)))
+
 load_dotenv(os.path.join(basedir, '.env'))
 
 
@@ -18,8 +21,7 @@ class DevelopmentConfig(object):
     username = os.environ.get(
         'DATABASE_USERNAME')
 
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL') or f'postgresql://{username}:{password}@localhost:5432/{dev_database_name}'
+    SQLALCHEMY_DATABASE_URI = f'postgresql://{username}:{password}@localhost:5432/{dev_database_name}'
 
     # Modify this and move the heroku postgres database url into the deployment config
 
@@ -29,9 +31,11 @@ class DevelopmentConfig(object):
 
     DEBUG = True
 
-    STUDENTS_PER_PAGE = 10
+    STUDENTS_PER_PAGE = int(os.environ.get(
+        'STUDENTS_PER_PAGE'))
 
-    QUESTIONS_PER_PAGE = 10
+    QUESTIONS_PER_PAGE = int(os.environ.get(
+        'QUESTIONS_PER_PAGE'))
 
     # Application threads. A common general assumption is
     # using 2 per available processor cores - to handle
@@ -39,18 +43,8 @@ class DevelopmentConfig(object):
     # operations using the other.
     THREADS_PER_PAGE = 2
 
-    # Enable protection agains *Cross-site Request Forgery (CSRF)*
-    CSRF_ENABLED = True
 
-    # Use a secure, unique and absolutely secret key for
-    # signing the data.
-    CSRF_SESSION_KEY = os.environ.get('CSRF_SESSION_KEY') or "secret"
-
-    # Secret key for signing cookies
-    SECRET_KEY = os.environ.get('SECRET_KEY') or "this-should-be-a-secret"
-
-
-class TestConfig(DevelopmentConfig):
+class TestConfig(object):
     """
     Flask configuration for tests
     """
@@ -63,8 +57,19 @@ class TestConfig(DevelopmentConfig):
     username = os.environ.get(
         'DATABASE_USERNAME')
 
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        'HEROKU_POSTGRESQL_BLACK_URL') or f'postgresql://{username}:{password}@localhost:5432/{test_database_name}'
+    SQLALCHEMY_DATABASE_URI = f'postgresql://{username}:{password}@localhost:5432/{test_database_name}'
+
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    DATABASE_CONNECT_OPTIONS = {}
+
+    DEBUG = True
+
+    STUDENTS_PER_PAGE = int(os.environ.get(
+        'STUDENTS_PER_PAGE'))
+
+    QUESTIONS_PER_PAGE = int(os.environ.get(
+        'QUESTIONS_PER_PAGE'))
 
 
 # Remember to setup a deployment config class
